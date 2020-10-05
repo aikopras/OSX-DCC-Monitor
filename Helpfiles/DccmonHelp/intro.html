@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title> Dccmon Help intro</title>
+  <meta name="AppleTitle" content="Dccmon Help Help" />
+  <meta name="AppleIcon" content="Dccmon Help Help/../../Icon.icns" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="robots" content="noindex" />
+  <style type="text/css">
+    h1 {font: 21.0px Lucida Grande; margin:  0.0px 0.0px 18.0px 0.0px; font-weight: bold; color: rgb(102, 153, 204)}
+    h2 {font: 19.0px Lucida Grande; margin: 18.0px 0.0px  6.0px 0.0px; font-weight: bold; color: rgb(102, 153, 204)}
+    p  {font: 15.0px Lucida Grande; margin:  0.0px 0.0px  6.0px 6.0px;}
+    li {font: 15.0px Lucida Grande; margin:  0.0px 0.0px  0.0px 0.0px;}
+    ul {font: 15.0px Lucida Grande; margin:  0.0px 0.0px  0.0px 0.0px; list-style-type: disc}
+    </style>
+</head>
+
+<body>
+<h1>Background</h1>
+
+<p>This program is part of a DCC monitoring solution. The description of the hardware can be found on <a href="https://easyeda.com/aikopras/dcc-monitor">https://easyeda.com/aikopras/dcc-monitor</a>; a description of the entire system can be found on <a href="https://sites.google.com/site/dcctrains/dcc-rs-bus-monitor">https://sites.google.com/site/dcctrains/dcc-rs-bus-monitor</a>.</p>
+  
+  <p>The program creates two TCP connections; one to receive DCC (loco and switch) messages, and one to receive RS-Bus messages. By integrating data from both TCP connections, a relation between DCC commands and RS-bus feedback information can be made, which eases the detection of faulty components. The software decodes (nearly) all DCC packets and can optionaly save and re-open trace files for later analysis.</p>
+  
+<p>DCC messages should be obtained from a DCC monitoring as described on <a href="https://easyeda.com/aikopras/dcc-monitor">EasyEda</a>. RS-bus feedback signals can best be obtained via Lenz's own LAN/USB Interface (serial number: 23151). Although it expects input via the Ethernet interface, the software can still be used together with the old "single-input" monitoring boards, provided a serial-to-Ethernet converter is being used.</p>
+
+
+</body>
+
+</html>

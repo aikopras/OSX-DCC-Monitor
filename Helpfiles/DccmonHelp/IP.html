@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title> Dccmon Help - Connecting to the monitoring hardware</title>
+  <meta name="AppleTitle" content="Dccmon Help" />
+  <meta name="AppleIcon" content="Dccmon Help/../../Icon.icns" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="robots" content="noindex" />
+  <style type="text/css">
+    h1 {font: 21.0px Lucida Grande; margin:  0.0px 0.0px 18.0px 0.0px; font-weight: bold; color: rgb(102, 153, 204)}
+    h2 {font: 19.0px Lucida Grande; margin: 18.0px 0.0px  6.0px 0.0px; font-weight: bold; color: rgb(102, 153, 204)}
+    p  {font: 15.0px Lucida Grande; margin:  0.0px 0.0px  6.0px 6.0px;}
+    li {font: 15.0px Lucida Grande; margin:  0.0px 0.0px  0.0px 0.0px;}
+    ul {font: 15.0px Lucida Grande; margin:  0.0px 0.0px  0.0px 0.0px; list-style-type: disc}
+    </style>
+</head>
+
+<body>
+  
+  <h1>Connecting to the monitoring hardware
+
+    <p>The first time the program is used the IP addresses and Ports of the DCC and RS-Bus monitor hardware should be entered via the Preferences window.</p>
+    
+    <p>The DCC monitoring server runs on the WIZ-105-SR module on the hardware board described on <a href="https://easyeda.com/aikopras/dcc-monitor">EasyEda</a>. The IP address and port of that module should be provided via the configuration software  belonging to the WIZ serial-Ethernet module. The same address and port should be entered in the preference window of this program.
+    
+    <p>Although this has not been tested, it should nowadays also be relatively easy to build new monitoring hardware using an ESP Wifi module.</p>
+    
+    <p>To analyse RS-Bus messages this program should communicate with a Lenz 23151 LAN Interface. Other types of interfaces (such as USB interfaces) are not supported. The IP address and port number of the Lenz 23151 LAN Interface should be obtained using Lenz' configuration program</p>
+  
+  <h1>Saving trace files
+    
+    <p>The preference window can also be used to set the directory where traces files can be stored. Trace files have as extension ".dcc" and as file name the current date and time.</p>
+    
+  <h1>Compensation for Lenz command systems
+      
+    <p>The preference window can finally be used to set the command system being used. Lenz (LZV100) command systems do not number all accesory addresses in a sequential way, but .
+      See <a href="https://http://normen.railcommunity.de/RCN-213.pdf">RCN 213</a> of the Rail Community for details.
+
+</body>
+
+</html>

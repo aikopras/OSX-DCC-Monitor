@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'dccmon' target in the 'dccmon' project
+//
+
+#ifdef __OBJC__
+  #import <Cocoa/Cocoa.h>
+#endif
