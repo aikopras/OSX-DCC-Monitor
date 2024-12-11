@@ -396,8 +396,8 @@ int showFeedback;
     else switchText = [NSString stringWithFormat:@"%d-", address];
   [_aStringSwitches replaceCharactersInRange:totalRange withString:switchText];
   // Determine the color for the switch
-  if (status) switchColor = [NSColor redColor];
-    else switchColor = [NSColor greenColor];
+  if (status) switchColor = [NSColor greenColor];
+    else switchColor = [NSColor redColor];
   // Change the color of _aStringSwitches to the selected color
   totalRange.length = [_aStringSwitches length];
   [_aStringSwitches beginEditing];
