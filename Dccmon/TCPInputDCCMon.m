@@ -34,6 +34,8 @@ uint8_t frameByte[MAX_FRAME_SIZE];     // Current byte on the TCP stream
 uint8_t frameTCP[MAX_FRAME_SIZE + 8];  // To store the frame that we currently receive from the TCP stream
 int frameSize = 0;                     // Size (until now) of the frame that we currently receive from TCP
 int totalBytes = 0;                    // Total number of bytes we have received thusfar
+#define CONNECT_TIMEOUT 3              // Seconds to wait for the DCCMon server before giving up
+int dccConnectSeconds = 0;             // Seconds we have been waiting for the TCP connection
 
 // ******************************************************************************************
 // ************************************** CONNECT METHODS ***********************************
@@ -50,8 +52,9 @@ int totalBytes = 0;                    // Total number of bytes we have received
   // check if we should copy all input to an output file
   if (_topObject.saveToFile) [_topObject.fileOutputObject openOutputFile];
   // Open the TCP connection.
+  dccConnectSeconds = 0;  // 2026: Try connecting a limited time
   _ipAddressDCC = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultIpAddressDCCMon"];
-  NSHost *host = [NSHost hostWithName:_ipAddressDCC];
+  //NSHost *host = [NSHost hostWithName:_ipAddressDCC];  // 2026 removed
   _tcpPortDCC = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultPortDCCMon"];
   NSInteger dccPort = [_tcpPortDCC integerValue];
   // Although we only read input data and therefore would not need an output stream, we still have to open an
@@ -59,8 +62,11 @@ int totalBytes = 0;                    // Total number of bytes we have received
   // Depricated [NSStream getStreamsToHost:host port:dccPort   inputStream:&(_iStreamDCC) outputStream:&(_oStreamDCC)];
   [NSStream getStreamsToHostWithName:_ipAddressDCC port:dccPort   inputStream:&(_iStreamDCC) outputStream:&(_oStreamDCC)];
   // Show TCP status line
-  NSString *messageText = @"TCP connect attempt to DCCMon";
-  messageText = [messageText stringByAppendingString:host.address];
+  // 2026: replaced the following two lines
+  // NSString *messageText = @"TCP connect attempt to DCCMon";
+  // messageText = [messageText stringByAppendingString:host.address];
+  NSString *messageText = @"TCP connect attempt to DCCMon at ";
+  messageText = [messageText stringByAppendingString:_ipAddressDCC];
   [_topObject.dccMonStatus setObjectValue:messageText];
   // Check for errors
   if (_iStreamDCC == nil) { NSLog(@"Error opening DCCMon TCP input stream."); return;}       
@@ -83,7 +89,17 @@ int totalBytes = 0;                    // Total number of bytes we have received
   if (_iStreamDCC == nil) {statusText = @"Error: No TCP input stream to DCCMon"; return;}
   NSUInteger newStatus = [self.iStreamDCC streamStatus];
   if (newStatus == NSStreamStatusNotOpen) {statusText = @"DCCMon: Not connected to server";}
-  if (newStatus == NSStreamStatusOpening) {statusText = @"DCCMon: Connecting to server ...";}
+  // 2026: Shorter time out
+  // if (newStatus == NSStreamStatusOpening) {statusText = @"DCCMon: Connecting to server ...";}
+    if (newStatus == NSStreamStatusOpening) {
+      statusText = @"DCCMon: Connecting to server ...";
+      // Give up if the server does not answer within CONNECT_TIMEOUT seconds (TCP itself waits much longer)
+      if (++dccConnectSeconds > CONNECT_TIMEOUT) {
+        statusText = @"DCCMon: No response from server";
+        [self closeDCCMonConnection];
+      }
+    }
+  //
   if (newStatus == NSStreamStatusOpen)    {statusText = @"DCCMon: Connected to server";}
   if (newStatus == NSStreamStatusError)   {statusText = @"DCCMon: Could not connect to server";[self closeDCCMonConnection];}
   if (newStatus == NSStreamStatusReading) {statusText = @"DCCMon: Reading from server";}

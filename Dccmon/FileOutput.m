@@ -55,8 +55,24 @@
     case NSStreamEventOpenCompleted:      {
       break;
     }
+    //case NSStreamEventErrorOccurred: {
+    //  [self closeOutputFile];
+    //  break;
+    //}
+    // 2026: Error handling improved
     case NSStreamEventErrorOccurred: {
-      [self closeOutputFile]; 
+    // The output file could not be opened or written (e.g. wrong or read-only save directory).
+    // Close it, switch the Save button off since nothing is saved, and tell the user why.
+      [self closeOutputFile];
+      [_topObject.valueSaveButton setState:NSControlStateValueOff];
+      _topObject.saveToFile = 0;
+      NSAlert *alert = [[NSAlert alloc] init];
+      [alert setMessageText:@"Cannot write the output file"];
+      [alert setInformativeText:[NSString stringWithFormat:@"Save directory: %@\n%@\n\nChoose another save directory in Preferences.",
+                                   [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultSaveDirectory"],
+                                   [[stream streamError] localizedDescription]]];
+      [alert runModal];
+      [alert release];
       break;
     }
   }
@@ -135,7 +151,10 @@
   NSString *myDate = [formatter stringFromDate:currentDate];
   [formatter release];
   NSString *myString = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultSaveDirectory"];
-  myString = [myString stringByAppendingString:myDate];
+  // myString = [myString stringByAppendingString:myDate];  // Replaced 2026
+  // Accept "~" and a directory with or without trailing "/"
+  myString = [myString stringByExpandingTildeInPath];
+  myString = [myString stringByAppendingPathComponent:myDate];
   myString = [myString stringByAppendingString:@".dcc"];
   return myString;
 }

@@ -129,12 +129,14 @@
   [self buttonSave:self];
   // Run a 1 second timer to update the status lines and counters
   _timerStatus = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(updateStatusInfo:) userInfo:nil repeats:YES];
+  // Use the light gray window background of the classic macOS design (sRGB 235), so input fields stand out (2026)
+  [_window setBackgroundColor:[NSColor colorWithSRGBRed:235/255.0 green:235/255.0 blue:235/255.0 alpha:1.0]];
 }
 
 - (void)dealloc {[super dealloc];}
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {return YES;}
-
+- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app {return YES;}
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
 {
@@ -348,7 +350,7 @@
 -(IBAction)showPreferences:(id)sender { 
   if (self.preferencesController == nil)
     self.preferencesController = [[PreferencesController alloc] initWithWindowNibName:@"PreferencesController"];
-  [self.preferencesController showWindow:self]; 
+  [self.preferencesController showWindow:self];
 }
 
 
@@ -371,7 +373,8 @@
   [[NSUserDefaults standardUserDefaults] setObject:@"192.168.24.213"        forKey:@"defaultIpAddressLenz"];
   [[NSUserDefaults standardUserDefaults] setObject:@"5970"                 forKey:@"defaultPortDCCMon"];
   [[NSUserDefaults standardUserDefaults] setObject:@"5550"                 forKey:@"defaultPortLenz"];
-  [[NSUserDefaults standardUserDefaults] setObject:@"/"                    forKey:@"defaultSaveDirectory"];
+  // [[NSUserDefaults standardUserDefaults] setObject:@"/"                    forKey:@"defaultSaveDirectory"];
+  [[NSUserDefaults standardUserDefaults] setObject:[NSHomeDirectory() stringByAppendingPathComponent:@"Desktop"] forKey:@"defaultSaveDirectory"];
   [[NSUserDefaults standardUserDefaults] setObject:@"1"                    forKey:@"defaultLenzSystem"];
 }
 

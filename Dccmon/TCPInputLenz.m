@@ -36,6 +36,9 @@ uint8_t lenzInBuffer[MAX_INBUFFER]; // LENZ frame buffer holding (parts of) sing
 int lenzInputBufferSize = 0;        // Size (until now) of the LENZ frame buffer
 int totalLenzBytes = 0;             // Total number of bytes we have received thusfar
 int lenzSynchronized = 0;           // Indicates if we know the beginning of the frames
+// 2026: shorter timeout
+#define CONNECT_TIMEOUT 3           // Seconds to wait for the Lenz interface before giving up
+int lenzConnectSeconds = 0;         // Seconds we have been waiting for the TCP connection
 
 // ******************************************************************************************
 // ************************************** CONNECT METHODS ***********************************
@@ -49,15 +52,17 @@ int lenzSynchronized = 0;           // Indicates if we know the beginning of the
   // check if we should copy all input to an output file
   if (_topObject.saveToFile) [_topObject.fileOutputObject openOutputFile];
   // Open the TCP connection.
+  lenzConnectSeconds = 0;  // 2026
   _ipAddressLenz = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultIpAddressLenz"];
-  NSHost *host = [NSHost hostWithName:_ipAddressLenz];
+  // 2026: removed
+  // NSHost *host = [NSHost hostWithName:_ipAddressLenz];
   _tcpPortLenz = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultPortLenz"];
   NSInteger dccPort = [_tcpPortLenz integerValue];
   // Depricated [NSStream getStreamsToHost:host port:dccPort   inputStream:&(_iStreamLenz) outputStream:&(_oStreamLenz)];
   [NSStream getStreamsToHostWithName:_ipAddressLenz port:dccPort   inputStream:&(_iStreamLenz) outputStream:&(_oStreamLenz)];
   // Show TCP status line
   NSString *messageText = @"TCP connect attempt to Lenz interface at ";
-  messageText = [messageText stringByAppendingString:host.address];
+  messageText = [messageText stringByAppendingString:_ipAddressLenz];
   [_topObject.lenzStatus setObjectValue:messageText];
   // Check for errors
   if (_iStreamLenz == nil) { NSLog(@"Error opening Lenz TCP input stream."); return;}
@@ -80,7 +85,17 @@ int lenzSynchronized = 0;           // Indicates if we know the beginning of the
   if (_iStreamLenz == nil) {statusText = @"Error: No TCP input stream to Lenz interface"; return;}
   NSUInteger newStatus = [self.iStreamLenz streamStatus];
   if (newStatus == NSStreamStatusNotOpen) {statusText = @"Lenz: Not connected to interface";}
-  if (newStatus == NSStreamStatusOpening) {statusText = @"Lenz: Connecting to interface ...";}
+  // 2026: Shorter time-out
+  // if (newStatus == NSStreamStatusOpening) {statusText = @"Lenz: Connecting to interface ...";}
+    if (newStatus == NSStreamStatusOpening) {
+      statusText = @"Lenz: Connecting to interface ...";
+      // Give up if the interface does not answer within CONNECT_TIMEOUT seconds (TCP itself waits much longer)
+      if (++lenzConnectSeconds > CONNECT_TIMEOUT) {
+        statusText = @"Lenz: No response from interface";
+        [self closeLenzConnection];
+      }
+    }
+  //
   if (newStatus == NSStreamStatusOpen)    {statusText = @"Lenz: Connected to interface";}
   if (newStatus == NSStreamStatusError)   {statusText = @"Lenz: Could not connect to interface";[self closeLenzConnection];}
   if (newStatus == NSStreamStatusReading) {statusText = @"Lenz: Reading from interface";}

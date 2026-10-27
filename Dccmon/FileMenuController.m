@@ -7,6 +7,8 @@
 
 #import "AppDelegate.h"
 #import "FileMenuController.h"
+#import "FileInput.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @implementation FileMenuController
 
@@ -17,7 +19,9 @@
   _topObject = ((AppDelegate *) [[NSApplication sharedApplication] delegate]);
   // Create an "Open" panel, allow only files with extension ".dcc", and open the file
   NSOpenPanel *oPanel = [NSOpenPanel openPanel];
-  [oPanel setAllowedFileTypes:[NSArray arrayWithObject:@"dcc"]];
+//  [oPanel setAllowedFileTypes:[NSArray arrayWithObject:@"dcc"]];
+  UTType *dccType = [UTType typeWithFilenameExtension:@"dcc"];
+  if (dccType != nil) [oPanel setAllowedContentTypes:[NSArray arrayWithObject:dccType]];
   NSInteger result = [oPanel runModal];
   if (result == NSModalResponseOK) {
 //  if (result == NSModalResponseOK) {
