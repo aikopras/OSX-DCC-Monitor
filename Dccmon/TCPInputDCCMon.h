@@ -7,21 +7,22 @@
 //
 
 #import "AppDelegate.h"
+#import "TCPSocket.h"
 
-@interface TCPInputDCCMonClass : NSObject <NSStreamDelegate>
+// 2026: NSStreamDelegate replaced by TCPSocketDelegate
+@interface TCPInputDCCMonClass : NSObject <TCPSocketDelegate>
 
 @property (assign) AppDelegate *topObject;
-@property (assign) DccObject *dccDecoder;
-@property (assign) RsObject *rsDecoder;
-@property (retain) NSInputStream *iStreamDCC;
-@property (retain) NSOutputStream *oStreamDCC;
+@property (retain) DccObject *dccDecoder;          // 2026: retain instead of assign, since owned by this object
+@property (retain) RsObject *rsDecoder;            // 2026: retain instead of assign, since owned by this object
+@property (retain) TCPSocketClass *socketDCC;      // 2026: replaces iStreamDCC and oStreamDCC
 @property (assign) NSString *ipAddressDCC;
 @property (assign) NSString *tcpPortDCC;
 
 
 - (void)openDCCMonConnection;
 - (void)closeDCCMonConnection;
-- (void)checkDCCMonConnectionStatus;
+- (BOOL)isOpen;                                     // 2026: replaces checkDCCMonConnectionStatus and iStreamDCC != nil
 - (void)handleDCCMonFrame;
 
 @end

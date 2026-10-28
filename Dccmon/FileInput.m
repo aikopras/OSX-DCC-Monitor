@@ -30,11 +30,13 @@
 - (void)openFile:(NSString *)path {
   // Make sure we can access the properties and methods of the APPDelegate Object
   _topObject = ((AppDelegate *) [[NSApplication sharedApplication] delegate]);
-  // Allocate a new DCC decoder object and initialise it
-  _dccDecoder  = [[DccObject alloc] init];
+  // 2026: If we are still reading another file, close that file first
+  [self closeFile];
+  // Allocate a DCC decoder object (2026: only the first time) and initialise it
+  if (_dccDecoder == nil) _dccDecoder = [[DccObject alloc] init];
   [_dccDecoder initDecoding];
-  // Allocate a new RS decoder object and initialise it
-  _rsDecoder  = [[RsObject alloc] init];
+  // Allocate a RS decoder object (2026: only the first time) and initialise it
+  if (_rsDecoder == nil) _rsDecoder = [[RsObject alloc] init];
   [_rsDecoder initDecoding];
   // check if we should copy all input to an output file
   if (_topObject.saveToFile) [_topObject.fileOutputObject openOutputFile];
@@ -76,6 +78,12 @@
       if (_intro_is_read == 0) { // Read 10 bytes
         len = [(NSInputStream *)stream read:intro maxLength:10];
         _intro_is_read = 1;
+        // 2026: Check that this is a dccmon trace file. These always start with "DCCMON"
+        if ((len < 6) || (memcmp(intro, "DCCMON", 6) != 0)) {
+          [self closeFile];                                                  // Clears the status line
+          [_topObject.dccMonStatus setObjectValue:@"Not a dccmon trace file"];
+          break;
+        }
       }
       else {
         // Read one complete packet, as received from the monitoring board
@@ -92,7 +100,7 @@
           _topObject.frame.time = 0;
           for(i = 5; i <= 10; i++) {_topObject.frame.time = _topObject.frame.time * 256 + header[i];}
           _topObject.frame.length = header[11];
-          if ((_topObject.frame.length > 0) & (_topObject.frame.length <= 9)) {len = [(NSInputStream *)stream read:contents maxLength:header[11]];}
+          if ((_topObject.frame.length > 0) && (_topObject.frame.length <= 9)) {len = [(NSInputStream *)stream read:contents maxLength:header[11]];}
           // Below seems a bit stupid, but having simple byte Arrays as properties do not work
           if (len > 0) _topObject.frame.byte1 = contents[0];
           if (len > 1) _topObject.frame.byte2 = contents[1];
@@ -135,6 +143,17 @@
     NSString *messageText = @"";
     [_topObject.dccMonStatus setObjectValue:messageText];
   }
+}
+
+
+// 2026: Release the objects owned by this object
+- (void)dealloc {
+  [_infile close];
+  [_infile removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+  [_infile release];
+  [_dccDecoder release];
+  [_rsDecoder release];
+  [super dealloc];
 }
 
 @end

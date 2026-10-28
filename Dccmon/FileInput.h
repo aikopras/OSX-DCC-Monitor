@@ -11,8 +11,8 @@
 @interface FileInputClass : NSObject <NSStreamDelegate>
 
 @property (assign) AppDelegate *topObject;
-@property (assign) DccObject *dccDecoder;
-@property (assign) RsObject *rsDecoder;
+@property (retain) DccObject *dccDecoder;   // 2026: retain instead of assign, since owned by this object
+@property (retain) RsObject *rsDecoder;     // 2026: retain instead of assign, since owned by this object
 @property (retain) NSInputStream *infile;
 
 @property int intro_is_read;

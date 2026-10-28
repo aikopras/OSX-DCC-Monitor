@@ -106,7 +106,10 @@ int showFeedback;
   showDccLoc = 0;
   showSwitch = 0;
   showFeedback = 0;
-  // Allocate space for the attributed mutable arrays
+  // Allocate space for the attributed mutable arrays (2026: release the previous ones first)
+  [_aStringLocFunctions release];
+  [_aStringSwitches release];
+  [_aStringFeedback release];
   _aStringLocFunctions = [[NSMutableAttributedString alloc] initWithString:@"ABCDEFG"];
   _aStringSwitches = [[NSMutableAttributedString alloc] initWithString:@"ABCDEFG"];
   _aStringFeedback = [[NSMutableAttributedString alloc] initWithString:@"ABCDEFG"];
@@ -114,6 +117,16 @@ int showFeedback;
   // _alwaysShowLoc = 0;
   // _alwaysShowFeedback = 0;
 }
+
+
+// 2026: Release the objects owned by this object
+- (void)dealloc {
+  [_aStringLocFunctions release];
+  [_aStringSwitches release];
+  [_aStringFeedback release];
+  [super dealloc];
+}
+
 
 - (void) newPacket {
   // Clear all normal string fields

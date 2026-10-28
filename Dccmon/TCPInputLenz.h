@@ -8,21 +8,23 @@
 
 #import <Foundation/Foundation.h>
 #import "AppDelegate.h"
+#import "TCPSocket.h"
 
-@interface TCPInputLenzClass : NSObject <NSStreamDelegate>
+// 2026: NSStreamDelegate replaced by TCPSocketDelegate
+@interface TCPInputLenzClass : NSObject <TCPSocketDelegate>
 
 @property (assign) AppDelegate *topObject;
 @property (assign) DccObject *dccDecoder;
-@property (assign) RsObject *rsDecoder;
-@property (retain) NSInputStream *iStreamLenz;
-@property (retain) NSOutputStream *oStreamLenz;
+@property (retain) RsObject *rsDecoder;            // 2026: retain instead of assign, since owned by this object
+@property (retain) TCPSocketClass *socketLenz;     // 2026: replaces iStreamLenz and oStreamLenz
 @property (assign) NSString *ipAddressLenz;
 @property (assign) NSString *tcpPortLenz;
+@property (assign) NSTimer *keepAliveTimer;        // 2026: sends the XpressNet Interface Status command
 
 
 - (void)openLenzConnection;
 - (void)closeLenzConnection;
-- (void)checkLenzConnectionStatus;
+- (BOOL)isOpen;                                     // 2026: replaces checkLenzConnectionStatus
 - (void)handleLenzFrame;
 
 

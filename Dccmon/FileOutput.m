@@ -89,9 +89,15 @@
 }
 
 
+// 2026: Release the objects owned by this object
+- (void)dealloc {
+  [self closeOutputFile];
+  [super dealloc];
+}
+
+
 - (void)writeIntro{
   uint8_t intro[10];
-  NSInteger len = 0;
   intro[0] = 'D';
   intro[1] = 'C';
   intro[2] = 'C';
@@ -102,7 +108,7 @@
   intro[7] = '2';
   intro[8] = '.';
   intro[9] = '0';
-  len = [_outfile write:intro maxLength:10];
+  [_outfile write:intro maxLength:10];
 }
 
 

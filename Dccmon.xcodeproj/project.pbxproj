@@ -24,6 +24,8 @@
 		243D0A1015650221004CE5B1 /* FrameStoreObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 243D0A0F15650221004CE5B1 /* FrameStoreObject.m */; };
 		243D0A1B156527A8004CE5B1 /* ValuesToShow.m in Sources */ = {isa = PBXBuildFile; fileRef = 243D0A1A156527A8004CE5B1 /* ValuesToShow.m */; };
 		2469C71C162C966F00DD952B /* TCPInputLenz.m in Sources */ = {isa = PBXBuildFile; fileRef = 2469C71B162C966F00DD952B /* TCPInputLenz.m */; };
+		2470D2A63091F31700EE3502 /* TCPSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 2470D2A53091F31700EE3502 /* TCPSocket.m */; };
+		2470D2A83091F35700EE3502 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2470D2A73091F35700EE3502 /* Network.framework */; };
 		2475E94F252BA15A0040ECC5 /* DccmonHelp in Resources */ = {isa = PBXBuildFile; fileRef = 2475E94E252BA1590040ECC5 /* DccmonHelp */; };
 		2475E954252BA7440040ECC5 /* DCCMON-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2475E951252BA7440040ECC5 /* DCCMON-icon.png */; };
 		2475E955252BA7440040ECC5 /* DCCMON-icon.key in Resources */ = {isa = PBXBuildFile; fileRef = 2475E952252BA7440040ECC5 /* DCCMON-icon.key */; };
@@ -66,6 +68,9 @@
 		243D0A1A156527A8004CE5B1 /* ValuesToShow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ValuesToShow.m; sourceTree = "<group>"; };
 		2469C71A162C966F00DD952B /* TCPInputLenz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCPInputLenz.h; sourceTree = "<group>"; };
 		2469C71B162C966F00DD952B /* TCPInputLenz.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCPInputLenz.m; sourceTree = "<group>"; };
+		2470D2A43091F31700EE3502 /* TCPSocket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCPSocket.h; sourceTree = "<group>"; };
+		2470D2A53091F31700EE3502 /* TCPSocket.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCPSocket.m; sourceTree = "<group>"; };
+		2470D2A73091F35700EE3502 /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
 		2475E94E252BA1590040ECC5 /* DccmonHelp */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DccmonHelp; path = Helpfiles/DccmonHelp; sourceTree = SOURCE_ROOT; };
 		2475E951252BA7440040ECC5 /* DCCMON-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DCCMON-icon.png"; sourceTree = "<group>"; };
 		2475E952252BA7440040ECC5 /* DCCMON-icon.key */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DCCMON-icon.key"; sourceTree = "<group>"; };
@@ -82,6 +87,7 @@
 			files = (
 				240975A23088164500FEAD73 /* UniformTypeIdentifiers.framework in Frameworks */,
 				240F8B2115604E9000D0BAAE /* Cocoa.framework in Frameworks */,
+				2470D2A83091F35700EE3502 /* Network.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,6 +115,7 @@
 		240F8B1F15604E9000D0BAAE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2470D2A73091F35700EE3502 /* Network.framework */,
 				240975A13088164500FEAD73 /* UniformTypeIdentifiers.framework */,
 				240F8B2015604E9000D0BAAE /* Cocoa.framework */,
 				240F8B2215604E9000D0BAAE /* Other Frameworks */,
@@ -140,6 +147,8 @@
 				243AEA8515604FCB0085656E /* TCPInputDCCMon.m */,
 				2469C71A162C966F00DD952B /* TCPInputLenz.h */,
 				2469C71B162C966F00DD952B /* TCPInputLenz.m */,
+				2470D2A43091F31700EE3502 /* TCPSocket.h */,
+				2470D2A53091F31700EE3502 /* TCPSocket.m */,
 				243353C1156C292100821FCF /* FileMenuController.h */,
 				243353C2156C292100821FCF /* FileMenuController.m */,
 				243D0A0E15650221004CE5B1 /* FrameStoreObject.h */,
@@ -259,6 +268,7 @@
 				243AEA931562F2140085656E /* DCCDecode.m in Sources */,
 				243D0A0C1564456B004CE5B1 /* FileInput.m in Sources */,
 				243D0A1015650221004CE5B1 /* FrameStoreObject.m in Sources */,
+				2470D2A63091F31700EE3502 /* TCPSocket.m in Sources */,
 				243D0A1B156527A8004CE5B1 /* ValuesToShow.m in Sources */,
 				243353C3156C292100821FCF /* FileMenuController.m in Sources */,
 				2482894F1595F39400C820B7 /* RSDecode.m in Sources */,

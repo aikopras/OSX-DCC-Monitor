@@ -106,6 +106,9 @@
   _fileInputObject = [[FileInputClass alloc] init];
   // Allocate memory for a new instance of the fileOutput class and initialise it
   _fileOutputObject = [[FileOutputClass alloc] init];
+  // 2026: Allocate the objects for the TCP connections once; they are reused after every START
+  _TCPInputDCCMonObject = [[TCPInputDCCMonClass alloc] init];
+  _TCPInputLenzObject = [[TCPInputLenzClass alloc] init];
   // Allocate memory for a new instance of the ValuesToShow class and initialise it
   _valuesToShow = [[ValuesToShow alloc] init];
   [_valuesToShow initValuesToShow];
@@ -133,7 +136,18 @@
   [_window setBackgroundColor:[NSColor colorWithSRGBRed:235/255.0 green:235/255.0 blue:235/255.0 alpha:1.0]];
 }
 
-- (void)dealloc {[super dealloc];}
+// 2026: Release the objects owned by the AppDelegate.
+// Not really needed, since the AppDelegate exists as long as the application runs
+- (void)dealloc {
+  [_TCPInputDCCMonObject release];
+  [_TCPInputLenzObject release];
+  [_fileInputObject release];
+  [_fileOutputObject release];
+  [_preferencesController release];
+  [_valuesToShow release];
+  [_frame release];
+  [super dealloc];
+}
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {return YES;}
 - (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app {return YES;}
@@ -154,10 +168,7 @@
   if ([_valueStartButton state]) {   
     // Initialise all values (again)
     [_valuesToShow initValuesToShow];
-    // Allocate memory and initialise the _TCPInputDCCMonObject 
-    _TCPInputDCCMonObject = [[TCPInputDCCMonClass alloc] init];
-    // Allocate memory and initialise the _TCPInputLenzObject
-    _TCPInputLenzObject = [[TCPInputLenzClass alloc] init];
+    // 2026: The _TCPInputDCCMonObject and _TCPInputLenzObject are allocated once, in applicationDidFinishLaunching
     // Now open the TCP connections for the DCCMon and Lenz interface
     [_TCPInputDCCMonObject openDCCMonConnection];
     [_TCPInputLenzObject openLenzConnection];
@@ -235,7 +246,8 @@
   if ([_valueSaveButton state]) {
     _saveToFile = 1;
     if (_fileInputObject.infile != nil) [_fileOutputObject openOutputFile];
-    if (_TCPInputDCCMonObject.iStreamDCC != nil) [_fileOutputObject openOutputFile];
+    // 2026: iStreamDCC no longer exists; isOpen is YES while connecting or connected
+    if ([_TCPInputDCCMonObject isOpen]) [_fileOutputObject openOutputFile];
   }
   else {
     [_fileOutputObject closeOutputFile];
@@ -324,8 +336,9 @@
 // ************************** METHODS FOR STATUS LINE AND PROGRESS INDICATOR **********************************
 // ************************************************************************************************************
 - (void)updateStatusInfo:(NSTimer *) timer {
-  [_TCPInputDCCMonObject checkDCCMonConnectionStatus];
-  [_TCPInputLenzObject checkLenzConnectionStatus];
+  // 2026: The connection status is now reported by TCPSocketClass when it changes; polling is no longer needed
+  // [_TCPInputDCCMonObject checkDCCMonConnectionStatus];
+  // [_TCPInputLenzObject checkLenzConnectionStatus];
   [_valuesToShow showStatistics];
 }
 
@@ -349,7 +362,7 @@
 // ************************************************************************************************************
 -(IBAction)showPreferences:(id)sender { 
   if (self.preferencesController == nil)
-    self.preferencesController = [[PreferencesController alloc] initWithWindowNibName:@"PreferencesController"];
+    self.preferencesController = [[[PreferencesController alloc] initWithWindowNibName:@"PreferencesController"] autorelease]; // 2026: autorelease
   [self.preferencesController showWindow:self];
 }
 

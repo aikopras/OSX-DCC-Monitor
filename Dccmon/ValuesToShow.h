@@ -19,9 +19,9 @@
 @property (assign) NSString *stringCvNumber;
 @property (assign) NSString *stringCvValue;
 @property (assign) NSString *stringRsAddress;
-@property (assign) NSMutableAttributedString *aStringLocFunctions;
-@property (assign) NSMutableAttributedString *aStringSwitches;
-@property (assign) NSMutableAttributedString *aStringFeedback;
+@property (retain) NSMutableAttributedString *aStringLocFunctions;  // 2026: retain instead of assign, since owned by this object
+@property (retain) NSMutableAttributedString *aStringSwitches;      // 2026: retain instead of assign, since owned by this object
+@property (retain) NSMutableAttributedString *aStringFeedback;      // 2026: retain instead of assign, since owned by this object
 
 @property NSInteger alwaysShowLoc;
 @property NSInteger alwaysShowFeedback;

@@ -5,6 +5,9 @@
 //  Created by Aiko Pras on 01-05-12.
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
+//  2026: The TCP connection is now handled by TCPSocketClass (Network framework), instead of NSStream.
+//  TCPSocketClass reports state changes and received data via the delegate methods below.
+//
 
 #import "TCPInputDCCMon.h"
 #import "FileOutput.h"
@@ -17,8 +20,7 @@
 @implementation TCPInputDCCMonClass
 
 @synthesize topObject = _topObject;
-@synthesize iStreamDCC = _iStreamDCC;
-@synthesize oStreamDCC = _oStreamDCC;
+@synthesize socketDCC = _socketDCC;       // 2026: replaces iStreamDCC and oStreamDCC
 
 @synthesize dccDecoder = _dccDecoder;
 @synthesize rsDecoder = _rsDecoder;
@@ -35,7 +37,6 @@ uint8_t frameTCP[MAX_FRAME_SIZE + 8];  // To store the frame that we currently r
 int frameSize = 0;                     // Size (until now) of the frame that we currently receive from TCP
 int totalBytes = 0;                    // Total number of bytes we have received thusfar
 #define CONNECT_TIMEOUT 3              // Seconds to wait for the DCCMon server before giving up
-int dccConnectSeconds = 0;             // Seconds we have been waiting for the TCP connection
 
 // ******************************************************************************************
 // ************************************** CONNECT METHODS ***********************************
@@ -43,137 +44,133 @@ int dccConnectSeconds = 0;             // Seconds we have been waiting for the T
 - (void)openDCCMonConnection { 
   // Make sure we can access the properties and methods of the APPDelegate Object
   _topObject = ((AppDelegate *) [[NSApplication sharedApplication] delegate]);
-  // Allocate a new DCC decoder object and initialise it
-  _dccDecoder  = [[DccObject alloc] init];
+  // Allocate a DCC decoder object (2026: only the first time) and initialise it
+  if (_dccDecoder == nil) _dccDecoder = [[DccObject alloc] init];
   [_dccDecoder initDecoding];
-  // Allocate a new RS decoder object and initialise it
-  _rsDecoder  = [[RsObject alloc] init];
+  // Allocate a RS decoder object (2026: only the first time) and initialise it
+  if (_rsDecoder == nil) _rsDecoder = [[RsObject alloc] init];
   [_rsDecoder initDecoding];
+  // 2026: Forget the (part of a) frame that may remain from a previous connection
+  frameSize = 0;
   // check if we should copy all input to an output file
   if (_topObject.saveToFile) [_topObject.fileOutputObject openOutputFile];
   // Open the TCP connection.
-  dccConnectSeconds = 0;  // 2026: Try connecting a limited time
   _ipAddressDCC = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultIpAddressDCCMon"];
-  //NSHost *host = [NSHost hostWithName:_ipAddressDCC];  // 2026 removed
   _tcpPortDCC = [[NSUserDefaults standardUserDefaults] objectForKey:@"defaultPortDCCMon"];
-  NSInteger dccPort = [_tcpPortDCC integerValue];
-  // Although we only read input data and therefore would not need an output stream, we still have to open an
-  // output stream since the TCP connection will only be closed (TCP FIN) in case we call [_oStreamDCC close] 
-  // Depricated [NSStream getStreamsToHost:host port:dccPort   inputStream:&(_iStreamDCC) outputStream:&(_oStreamDCC)];
-  [NSStream getStreamsToHostWithName:_ipAddressDCC port:dccPort   inputStream:&(_iStreamDCC) outputStream:&(_oStreamDCC)];
-  // Show TCP status line
-  // 2026: replaced the following two lines
-  // NSString *messageText = @"TCP connect attempt to DCCMon";
-  // messageText = [messageText stringByAppendingString:host.address];
-  NSString *messageText = @"TCP connect attempt to DCCMon at ";
-  messageText = [messageText stringByAppendingString:_ipAddressDCC];
-  [_topObject.dccMonStatus setObjectValue:messageText];
-  // Check for errors
-  if (_iStreamDCC == nil) { NSLog(@"Error opening DCCMon TCP input stream."); return;}       
-  [_iStreamDCC retain];
-  [_iStreamDCC setDelegate:self];
-  [_iStreamDCC scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-  [_iStreamDCC open];
-  if (_oStreamDCC == nil) { NSLog(@"Error opening DCCMon TCP output stream."); return;}
-  [_oStreamDCC retain];
-  [_oStreamDCC setDelegate:self];
-  [_oStreamDCC scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-  [_oStreamDCC open];
   // Show the progress indicator
   [_topObject dccMonprogressIndicator: 1];
+  // 2026: The connection is now made by TCPSocketClass, which reports back via the delegate methods below.
+  // The status line is updated by tcpSocket:didChangeState:reason:
+  if (_socketDCC == nil) _socketDCC = [[TCPSocketClass alloc] init];
+  [_socketDCC setDelegate:self];
+  [_socketDCC openToHost:_ipAddressDCC port:_tcpPortDCC timeout:CONNECT_TIMEOUT];
 }
 
 
-- (void)checkDCCMonConnectionStatus {
-  NSString *statusText;
-  if (_iStreamDCC == nil) {statusText = @"Error: No TCP input stream to DCCMon"; return;}
-  NSUInteger newStatus = [self.iStreamDCC streamStatus];
-  if (newStatus == NSStreamStatusNotOpen) {statusText = @"DCCMon: Not connected to server";}
-  // 2026: Shorter time out
-  // if (newStatus == NSStreamStatusOpening) {statusText = @"DCCMon: Connecting to server ...";}
-    if (newStatus == NSStreamStatusOpening) {
-      statusText = @"DCCMon: Connecting to server ...";
-      // Give up if the server does not answer within CONNECT_TIMEOUT seconds (TCP itself waits much longer)
-      if (++dccConnectSeconds > CONNECT_TIMEOUT) {
-        statusText = @"DCCMon: No response from server";
-        [self closeDCCMonConnection];
-      }
-    }
-  //
-  if (newStatus == NSStreamStatusOpen)    {statusText = @"DCCMon: Connected to server";}
-  if (newStatus == NSStreamStatusError)   {statusText = @"DCCMon: Could not connect to server";[self closeDCCMonConnection];}
-  if (newStatus == NSStreamStatusReading) {statusText = @"DCCMon: Reading from server";}
-  if (newStatus == NSStreamStatusWriting) {statusText = @"DCCMon: Writing to server";}
-  if (newStatus == NSStreamStatusAtEnd)   {statusText = @"DCCMon: Connection to server closing";}
-  if (newStatus == NSStreamStatusClosed)  {statusText = @"DCCMon: Connection to server closed";}
+- (void)closeDCCMonConnection {
+  // 2026: Closing the socket results in a call of tcpSocket:didChangeState:reason: with TCP_SOCKET_CLOSED,
+  // which updates the status line and cleans up (see connectionEnded)
+  [_socketDCC close];
+}
+
+
+// 2026: YES while connecting or connected (formerly tested via iStreamDCC != nil)
+- (BOOL)isOpen {
+  return [_socketDCC isOpen];
+}
+
+
+// 2026: Release the socket. The delegate is cleared first, so the socket does not call back into this object.
+// (The socket object itself stays alive until its connection has been cancelled completely.)
+- (void)dealloc {
+  [_socketDCC setDelegate:nil];
+  [_socketDCC close];
+  [_socketDCC release];
+  [_dccDecoder release];
+  [_rsDecoder release];
+  [super dealloc];
+}
+
+
+// 2026: Clean up after the connection has been closed, could not be established, or was lost
+- (void)connectionEnded {
+  // Stop writing to the output file
+  [_topObject.fileOutputObject closeOutputFile];
+  // Write some logging info
+  [_topObject.valuesToShow showStatistics];
+  [_topObject dccMonprogressIndicator: 0];
+}
+
+
+// ******************************************************************************************
+// ******************************* TCP SOCKET DELEGATE METHODS ******************************
+// ******************************************************************************************
+// 2026: Called by TCPSocketClass (on the main thread) after every state change of the connection.
+// Replaces checkDCCMonConnectionStatus, which was called every second
+- (void)tcpSocket:(TCPSocketClass *)socket didChangeState:(tcpSocketState_t)state reason:(NSString *)reason {
+  NSString *statusText = @"";
+  switch (state) {
+    case TCP_SOCKET_CONNECTING: {
+      statusText = [@"TCP connect attempt to DCCMon at " stringByAppendingString:_ipAddressDCC];
+      break; }
+    case TCP_SOCKET_CONNECTED: {
+      statusText = @"DCCMon: Connected to server";
+      [_topObject dccMonprogressIndicator: 0];
+      break; }
+    case TCP_SOCKET_FAILED: {
+      if ([socket lastErrorCode] == ETIMEDOUT) statusText = @"DCCMon: No response from server";
+      else statusText = [NSString stringWithFormat:@"DCCMon: Could not connect to server (%@)", reason];
+      [self connectionEnded];
+      break; }
+    case TCP_SOCKET_LOST: {
+      statusText = [NSString stringWithFormat:@"DCCMon: Connection to server lost (%@)", reason];
+      [self connectionEnded];
+      break; }
+    case TCP_SOCKET_CLOSED: {
+      if (reason == nil) statusText = @"TCP connection to DCCMon closed";
+      else statusText = [NSString stringWithFormat:@"TCP connection to DCCMon closed (%@)", reason];
+      [self connectionEnded];
+      break; }
+  }
   [_topObject.dccMonStatus setObjectValue:statusText];
+}
+
+
+// 2026: Called by TCPSocketClass (on the main thread) for every chunk of data received from the DCCMon server
+- (void)tcpSocket:(TCPSocketClass *)socket didReceiveBytes:(const uint8_t *)bytes length:(NSUInteger)length {
+  for (NSUInteger i = 0; i < length; i++) {
+    if (![_socketDCC isOpen]) break;    // handleDCCMonByte may close the connection
+    [self handleDCCMonByte:bytes[i]];
+  }
 }
 
 
 // ******************************************************************************************
 // *************************************** RECEIVE METHODS **********************************
 // ******************************************************************************************
-
-- (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode
+// 2026: Formerly the NSStreamEventHasBytesAvailable part of stream:handleEvent:. The logic is unchanged.
+- (void)handleDCCMonByte:(uint8_t)byte
 {
-  NSInteger len = 0;  // to check if we have read exactly 1 byte from the TCP stream
-  switch(eventCode) {
-    case NSStreamEventNone:               { break;}
-    case NSStreamEventOpenCompleted:      { [_topObject dccMonprogressIndicator: 0]; break;}
-    case NSStreamEventHasSpaceAvailable:  { break;}
-    case NSStreamEventErrorOccurred:      { break;}
-    case NSStreamEventHasBytesAvailable:  { 
-      len = [(NSInputStream *)stream read:frameByte maxLength:1];
-      if (len == 1) 
-      { // We have an input byte (no error reading from stream)
-        // NSLog(@"char = %0x", frameByte[0]);  // for testing
-        totalBytes++;
-        if (frameByte[0] > 127) 
-        { // The byte we've received marks the beginning of a new frame
-          // handle first the frame we still hold in frame_Build
-          [self handleDCCMonFrame];
-          frameTCP[0] = frameByte[0];
-          frameSize = 1;
-        }
-        else 
-        { // The byte we've received is not the first byte of a frame. Store it (unless frame is too big)
-          // However: what we've received need not (yet) be part of a a valid frame. It can be that we just
-          // started receiving and we've not yet seen the frame start. In case we see too many errors, close stream.
-          if (frameSize < MAX_FRAME_SIZE) {frameTCP[frameSize] = frameByte[0];}
-          if (frameSize > (3 * MAX_FRAME_SIZE)) {[self closeDCCMonConnection];} // close stream
-          frameSize ++;
-        }
-      }
-      break; }
-    case NSStreamEventEndEncountered:
-    { 
-      [self closeDCCMonConnection];
-      break;
-    }
+  frameByte[0] = byte;
+  // NSLog(@"char = %0x", frameByte[0]);  // for testing
+  totalBytes++;
+  if (frameByte[0] > 127) 
+  { // The byte we've received marks the beginning of a new frame
+    // handle first the frame we still hold in frame_Build
+    [self handleDCCMonFrame];
+    frameTCP[0] = frameByte[0];
+    frameSize = 1;
+  }
+  else 
+  { // The byte we've received is not the first byte of a frame. Store it (unless frame is too big)
+    // However: what we've received need not (yet) be part of a a valid frame. It can be that we just
+    // started receiving and we've not yet seen the frame start. In case we see too many errors, close stream.
+    if (frameSize < MAX_FRAME_SIZE) {frameTCP[frameSize] = frameByte[0];}
+    if (frameSize > (3 * MAX_FRAME_SIZE)) {[self closeDCCMonConnection];} // close stream
+    frameSize ++;
   }
 }
 
-- (void)closeDCCMonConnection{
-  if (_iStreamDCC != nil) {
-    // Stop writing to the output file
-    [_topObject.fileOutputObject closeOutputFile];
-    // Close and remove the TCP input stream
-    [_iStreamDCC close]; // Note that this call will NOT close the TCP connection (TCP FIN)
-    [_iStreamDCC removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [_iStreamDCC release];
-    _iStreamDCC = nil; // stream is instance variable, so reinit it
-    // Close and remove the TCP output stream
-    [_oStreamDCC close]; // Only this call will close the TCP connection (TCP FIN)
-    [_oStreamDCC removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [_oStreamDCC release];
-    _oStreamDCC = nil; // stream is instance variable, so reinit it
-    // Update the status line manually, now that the runloop will not call this anymore
-    [_topObject.dccMonStatus setObjectValue:@"TCP connection to DCCMon closed"];
-    // Write some logging info
-    [_topObject.valuesToShow showStatistics];
-    [_topObject dccMonprogressIndicator: 0]; 
-  }
-}
 
 
 // ************************************************************************************************************

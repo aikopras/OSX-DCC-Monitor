@@ -14,7 +14,7 @@
 
 @synthesize topObject = _topObject;
 
-- (IBAction)doOpen:(id)pId; { 
+- (IBAction)doOpen:(id)pId { 
   // Make sure we can access the properties and methods of the APPDelegate and dccDecoder Object
   _topObject = ((AppDelegate *) [[NSApplication sharedApplication] delegate]);
   // Create an "Open" panel, allow only files with extension ".dcc", and open the file
